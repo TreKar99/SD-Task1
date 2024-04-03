@@ -1,28 +1,29 @@
 #!/usr/bin/env python
 import pika
-import sys
+#from inputBox import *
 
 
 class Producer:
-	connection
-	channel
 
-	def __init__(self):
-            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-	    self.channel = connection.channel()
-	    self.channel.queue_declare(queue='insult_channel')
-	
-	def send(self):
-		message = input('INSULTAME: ')  
-		channel.basic_publish(
-		    exchange='',
-    routing_key='insult_channel',
-    body=message
-    #properties=pika.BasicProperties(
-    #    delivery_mode=pika.DeliveryMode.Persistent
-    )
-		print(f" [x] Sent {message}")
-		#connection.close()
+    def __init__(self):
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host='localhost'))
+        self.channel = self.connection.channel()
+        self.channel.queue_declare(queue='insult_channel')
 
-	def close(self):
-		
+    def send(self):
+#        try:
+            #            input = InputBox()
+            #            message = input.input()
+            message = input("INSULTAME ")
+            self.channel.basic_publish(
+                exchange='',
+                routing_key='insult_channel',
+                body=message
+            )
+            print(f" [x] Sent {message}")
+#        finally:
+#            self.close()
+
+    def close(self):
+        self.connection.close()

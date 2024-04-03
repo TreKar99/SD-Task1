@@ -26,3 +26,6 @@ class InputBox():
     def guardar_texto(self):
         self.texto = self.entrada.get()
         self.ventana.destroy()
+
+    def kill(self):
+        self.ventana.destroy()
