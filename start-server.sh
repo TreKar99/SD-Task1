@@ -9,7 +9,7 @@ fi
 apt update
 
 apt install rabbitmq-server -y
-apt install redis
+apt install redis -y
 
 pip3 install pika
 pip3 install redis
@@ -17,5 +17,7 @@ pip3 install redis
 echo "STARTING: rabbitmq-server"
 systemctl is-active rabbitmq-server && systemctl restart rabbitmq-server || systemctl start rabbitmq-server
 
-echo "START: redis-server"
+echo "STARTING: redis-server"
 redis-server 2</dev/null
+systemctl stop rabbitmq-server
+
