@@ -17,7 +17,6 @@ pip3 install redis
 echo "STARTING: rabbitmq-server"
 systemctl is-active rabbitmq-server && systemctl restart rabbitmq-server || systemctl start rabbitmq-server
 
-echo "STARTING: redis-server"
+echo "START: redis-server"
 redis-server 2</dev/null
 systemctl stop rabbitmq-server
-

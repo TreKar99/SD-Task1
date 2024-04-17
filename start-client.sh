@@ -25,9 +25,11 @@ while true; do
   case $choice in
     1)
       echo -e "\033[31mOption 1: Connect to chat\033[0m"
+      python3 RabbitMQPubSub/groupChat.py
       ;;
     2)
       echo -e "\033[32mOption 2: Subscribe to group chat\033[0m"
+      
       ;;
     3)
       echo -e "\033[33mOption 3: Discover chats\033[0m"
