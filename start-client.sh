@@ -3,8 +3,8 @@
 # Function to display the menu
 function display_menu() {
   echo "Chat Menu:"
-  echo -e "\033[31m1. Connect to chat (private or group)\033[0m"
-  echo -e "\033[32m2. Subscribe to group chat (create if non-existent)\033[0m"
+  echo -e "\033[31m1. Connect to private chat\033[0m"
+  echo -e "\033[32m2. Connect to group chat\033[0m"
   echo -e "\033[33m3. Discover chats\033[0m"
   echo -e "\033[34m4. Access insult channel\033[0m"
   echo -e "\033[35m5. Exit\033[0m"
@@ -24,12 +24,11 @@ while true; do
 
   case $choice in
     1)
-      echo -e "\033[31mOption 1: Connect to chat\033[0m"
-      python3 RabbitMQPubSub/groupChat.py
+      echo -e "\033[31mOption 1: Connect to private chat\033[0m"
       ;;
     2)
-      echo -e "\033[32mOption 2: Subscribe to group chat\033[0m"
-      
+      echo -e "\033[32mOption 2: Connect to group chat\033[0m"
+      python3 RabbitMQPubSub/groupChat.py
       ;;
     3)
       echo -e "\033[33mOption 3: Discover chats\033[0m"
@@ -37,7 +36,7 @@ while true; do
       ;;
     4)
       echo -e "\033[34mOption 4: Access insult channel\033[0m"
-      python3 RabbitQueue/insultChannel.py      
+      python3 RabbitQueue/insultChannel.py
       ;;
     5)
       echo "Exiting..."
