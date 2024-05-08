@@ -33,6 +33,7 @@ while true; do
     3)
       echo -e "\033[33mOption 3: Discover chats\033[0m"
       python3 Redis/redisNameServer.py
+      #python3 ChatDiscovery.py
       ;;
     4)
       echo -e "\033[34mOption 4: Access insult channel\033[0m"
