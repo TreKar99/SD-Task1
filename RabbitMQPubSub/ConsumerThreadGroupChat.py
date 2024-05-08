@@ -1,39 +1,36 @@
-#!/usr/bin/env python
 import threading
 import pika
 
 
-class ConsumerThreadGroupChat(threading.Thread):
-    def __init__(self, event):
-        # Superclass constructor
-        super(ConsumerThreadGroupChat, self).__init__()
-        # Event
-        self.event = event
+class ConsumerThread(threading.Thread):
+    def __init__(self, group_name):
+        super(ConsumerThread, self).__init__()
+        self._is_interrupted = False
+        self.group_name = group_name
+
+    def stop(self):
+        self._is_interrupted = True
+        print("\nEnding consumer...")
 
     def run(self):
         # Connection to RabbitMQ server
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         channel = connection.channel()
 
-        channel.exchange_declare(exchange='groupchat', exchange_type='fanout')
+        # Exchange: group
+        channel.exchange_declare(exchange=self.group_name, exchange_type='fanout', durable=True)
 
-        result = channel.queue_declare(queue='', exclusive=True)
+        result = channel.queue_declare(queue='', exclusive=True, durable=True)
         queue_name = result.method.queue
 
-        channel.queue_bind(exchange='groupchat', queue=queue_name)
+        channel.queue_bind(exchange=self.group_name, queue=queue_name)
 
         print(' [*] Waiting for logs. To exit press CTRL+C')
 
-        def callback(ch, method, properties, body):
+        for message in channel.consume(queue_name, inactivity_timeout=1, auto_ack=False):
+            if self._is_interrupted:
+                break
+            if not all(message):
+                continue
+            method, properties, body = message
             print(f"Received [{body.decode('utf-8')}]")
-            if body.decode('utf-8') == "EXIT":
-                channel.stop_consuming()
-
-        channel.basic_consume(queue=queue_name,
-                              on_message_callback=callback,
-                              auto_ack=True)
-
-        while not self.event.is_set():
-            channel.start_consuming()  # Only start consuming if not signaled to stop
-
-        print("\nEnding consumer...")

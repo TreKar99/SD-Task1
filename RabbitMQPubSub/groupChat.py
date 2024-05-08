@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 import sys
+
 import pika
-from threading import Event
 
-from ConsumerThreadGroupChat import ConsumerThreadGroupChat
-
-# Create an event
-event = Event()
+from ConsumerThreadGroupChat2 import ConsumerThread
 
 # Executing consumer in a thread
-thread = ConsumerThreadGroupChat(event)
+thread = ConsumerThread(sys.argv[1])
 thread.start()
 
 # Connection to RabbitMQ server
@@ -17,7 +14,9 @@ connection = pika.BlockingConnection(
             pika.ConnectionParameters(host='localhost'))
 channel = connection.channel()
 
-channel.exchange_declare(exchange='groupchat', exchange_type='fanout')
+group_name = sys.argv[1]
+
+channel.exchange_declare(exchange=group_name, exchange_type='fanout', durable=True)
 
 # Executing publisher
 # Loop publisher
@@ -25,16 +24,14 @@ try:
     while True:
         message = input()
 
-        channel.basic_publish(exchange='groupchat', routing_key='', body=message)
+        channel.basic_publish(exchange=group_name, routing_key='', body=message, properties=pika.BasicProperties(
+                         delivery_mode=pika.DeliveryMode.Persistent
+                      ))
         print(f"Sent [{message}]")
 except KeyboardInterrupt:
     print("\nEnding publisher...")
-    channel.basic_publish(exchange='groupchat', routing_key='', body="EXIT")
-    event.set()
+    thread.stop()
 
 thread.join()
 connection.close()
 print("\nGroup chat left")
-
-
-
