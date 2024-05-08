@@ -25,6 +25,7 @@ while true; do
   case $choice in
     1)
       echo -e "\033[31mOption 1: Connect to private chat\033[0m"
+      python3 private_chats/gRPC_client.py
       ;;
     2)
       echo -e "\033[32mOption 2: Connect to group chat\033[0m"
