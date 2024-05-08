@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+message PeticioMissatge {
+  uint32 id_thread = 1;
+  string missatge = 2;
+  uint32 id_remitent = 3;
+  uint32 id_destinatari = 4;
+}
+
+message RespostaMissatge {
+  uint64 id = 1;
+}
+
+message Missatge {
+  uint32 id = 1;
+  uint32 id_thread = 2;
+  string missatge = 3;
+  uint32 id_remitent = 4;
+  uint32 id_destinatari = 5;
+}
+
+message Client {
+  uint32 id_destinatari = 1;
+}
+
+service PrivateChatsService {
+  // Servei que proporciona dos procediments per enviar i rebre missatges
+  // S'utilitza el stream ChatMessage per poder enviar nous missatges al destinatari mentre en rebem d'altre
+  rpc EnviarMissatge(PeticioMissatge) returns (RespostaMissatge);
+  rpc RebreMissatges(Client) returns (stream Missatge);
+}
