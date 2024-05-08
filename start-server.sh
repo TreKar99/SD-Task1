@@ -15,6 +15,7 @@ pip3 install pika
 pip3 install redis
 
 echo "STARTING: rabbitmq-server"
+sudo /usr/lib/rabbitmq/bin/rabbitmq-plugins enable rabbitmq_management
 systemctl is-active rabbitmq-server && systemctl restart rabbitmq-server || systemctl start rabbitmq-server
 
 echo "START: redis-server"
