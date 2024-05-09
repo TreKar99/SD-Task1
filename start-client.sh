@@ -29,7 +29,9 @@ while true; do
       ;;
     2)
       echo -e "\033[32mOption 2: Connect to group chat\033[0m"
-      python3 RabbitMQPubSub/groupChat.py
+      echo "A quin grup chat et vols conectar?"
+      read groupchat
+      python3 RabbitMQPubSub/groupChat.py $groupchat
       ;;
     3)
       echo -e "\033[33mOption 3: Discover chats\033[0m"
