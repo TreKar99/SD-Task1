@@ -7,7 +7,7 @@ class ConsumerThread(threading.Thread):
         super(ConsumerThread, self).__init__()
         self._is_interrupted = False
         self.group_name = group_name
-        self.queue_name = queue_name
+        self.queue_name = queue_name + group_name
 
     def stop(self):
         self._is_interrupted = True
