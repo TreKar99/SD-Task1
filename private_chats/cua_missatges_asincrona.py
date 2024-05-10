@@ -27,7 +27,6 @@ class CuaMissatgesAsincrona:
     async def get_missatge(self, id_destinatari):
         # Obtenir la cua del destinatari, en cas que no existeixi, es crea
         cua_destinatari = self.__get_or_create_queue(id_destinatari)
-        logging.info(f"Llegint de la cua pel destinatari={id_destinatari}")
         # Obtenir el missatge de la cua
         nou_missatge = await cua_destinatari.get()
         logging.info(f"Nou missatge rebut pel destinatari={id_destinatari}")

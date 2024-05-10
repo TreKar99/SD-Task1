@@ -1,76 +1,53 @@
 import asyncio
 import grpc
 import logging
-
-from typing import Dict
+import cua_missatges_asincrona
 
 import chatPrivat_pb2
 import chatPrivat_pb2_grpc
 
-from servei_chat import ServeiChat
-
-
-# Dades dels clients dels chats: identificador i indicador de si està o no en línia
-class ChatClient:
-    id_client: int
-    online: bool = True
-
-    def __init__(self, id_client, online=True):
-        self.id_client = id_client
-        self.online = online
-
-    def is_online(self) -> bool:
-        return self.online
-
-    def set_online(self, online) -> None:
-        self.online = online
-
 
 # Servidor
 class Server(chatPrivat_pb2_grpc.PrivateChatsServiceServicer):
-    # Serveis d'escriptura i lectura de missatges
-    servei_chat: ServeiChat = ServeiChat()
-    # Diccionari per emmagatzemar els clients
-    clients: Dict[int, ChatClient] = {}
+    # Cua asíncrona que conté un diccionari amb la cua de cada client
+    cua_missatges = cua_missatges_asincrona.CuaMissatgesAsincrona = cua_missatges_asincrona.CuaMissatgesAsincrona()
 
-    async def EnviarMissatge(self, request: chatPrivat_pb2.PeticioMissatge, context: grpc.aio.ServicerContext) -> chatPrivat_pb2.RespostaMissatge:
-        try:
-            logging.info(f"EnviarMissatge amb el paràmetre {request=}")
-            # El client ha demanat tancar la connexió
-            if request.missatge == "EXIT":
-                logging.info(f"Remitent={request.id_remitent} desconnectant-se.")
-                if request.id_remitent in self.clients.keys():
-                    # Modifiquem l'estat del client
-                    self.clients[request.id_remitent].set_online(False)
-                # L'id del destinatari passa a ser el del remitent que ha demanat desconnectar-se
-                request.id_destinatari = request.id_remitent
-            await self.servei_chat.escriure_missatge(request)
-        except asyncio.CancelledError:
-            print("Cancelled")
-            raise
-        return chatPrivat_pb2.RespostaMissatge()
+    # Funció asíncrona que envia els missatges a la cua del destinatari
+    async def EnviarMissatge(self, peticio: chatPrivat_pb2.PeticioMissatge,
+                             context: grpc.aio.ServicerContext) -> chatPrivat_pb2.RespostaMissatge:
+        # Si el missatge que vol enviar el client correspon a "EXIT" aquest és una petició per tancar la connexió
+        if peticio.missatge == "EXIT":
+            logging.info(f"Client={peticio.id_remitent} desconnectant-se.")
+            # L'id del destinatari passa a ser el del remitent que ha demanat desconnectar-se
+            # D'aquesta manera, enviant-li l'EXIT li fem parar de llegir missatges
+            peticio.id_destinatari = peticio.id_remitent
 
-    async def RebreMissatges(self, request: chatPrivat_pb2.Client, context: grpc.aio.ServicerContext) -> chatPrivat_pb2.Missatge:
-            logging.info(f"RebreMissatges amb el paràmetre {request=}")
-            # Comprovar que tenim el client que ha de rebre els missatges
-            # En cas que no, afegir-lo
-            if not self.clients.get(request.id_destinatari):
-                self.clients[request.id_destinatari] = ChatClient(request.id_destinatari, True)
-            else:
-                # Indicar com a connectat al client destinatari dels missatges
-                self.clients[request.id_destinatari].online = True
-            while self.__client_connectat(request.id_destinatari):
-                missatge = await self.servei_chat.llegir_missatge(request)
-                # Per tal de desconnectar-se
-                if missatge.missatge == "EXIT":
-                    break
-                yield missatge
+        # Inserir els missatges a la cua/topic del destinatari
+        id_nou_missatge = self.cua_missatges.get_nombre_missatges(peticio.id_destinatari)
+        # Inserir a la cua del destinatari el missatge (creant un objecte Missatge amb les dades del missatge a enviar)
+        id_nou_missatge = await self.cua_missatges.put_missatge(
+            id_destinatari=peticio.id_destinatari,
+            missatge=chatPrivat_pb2.Missatge(
+                id=id_nou_missatge, id_thread=peticio.id_thread,
+                missatge=peticio.missatge, id_remitent=peticio.id_remitent,
+                id_destinatari=peticio.id_destinatari,
+            ),
+        )
+        return chatPrivat_pb2.RespostaMissatge(id=id_nou_missatge)
 
-    # Consultar si el client està o no connectat
-    def __client_connectat(self, id_client):
-        if id_client not in self.clients.keys():
-            return False
-        return self.clients[id_client].is_online()
+    # Funció asíncrona que obté els missatges rebuts a la cua del destinatari
+    async def RebreMissatges(self, peticio: chatPrivat_pb2.Client,
+                             context: grpc.aio.ServicerContext) -> chatPrivat_pb2.Missatge:
+        # Comprovar que tenim el client que ha de rebre els missatges
+        # En cas que no, afegir-lo
+
+        # Estar rebent missatges fins desconnectar-se amb "EXIT"
+        while True:
+            missatge = await self.cua_missatges.get_missatge(peticio.id_destinatari)
+            # Per tal de desconnectar-se
+            if missatge.missatge == "EXIT":
+                break
+            yield missatge
 
 
 async def serve() -> None:
