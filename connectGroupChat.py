@@ -16,6 +16,9 @@ channel = connection.channel()
 
 group_name = sys.argv[1]
 
+queue_name = sys.argv[2]
+queue_name = queue_name + group_name
+
 # Executing publisher
 # Loop publisher
 try:
@@ -34,6 +37,6 @@ thread.join()
 print("\nDo you want to unsubscribe the group? [Y/N]")
 answer = input()
 if answer == "Y":
-    channel.queue_unbind(exchange=group_name, queue=sys.argv[2])
+    channel.queue_unbind(exchange=group_name, queue=queue_name)
 connection.close()
 print("\nGroup chat left")
